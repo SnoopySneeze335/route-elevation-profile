@@ -17,7 +17,7 @@ An interactive elevation profile for any line in your [QField](https://qfield.or
 **In QField:** Settings → Plugins → **Install plugin from URL**, and paste:
 
 ```
-https://github.com/YOUR-GITHUB-USERNAME/route-elevation-profile/releases/latest/download/route-elevation-profile.zip
+https://github.com/SnoopySneeze335/route-elevation-profile/releases/latest/download/route-elevation-profile.zip
 ```
 
 Allow it when QField asks for permission. A mountain button appears on the map.
@@ -56,4 +56,4 @@ git push origin v0.2.0
 
 ## License
 
-MIT; see [LICENSE](LICENSE).
+GPL-3.0; see [LICENSE](LICENSE).
