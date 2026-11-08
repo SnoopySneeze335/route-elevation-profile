@@ -588,6 +588,9 @@ Item {
 
   // --------------------------------------------------------- map items
   function showRouteOnMap() {
+    if (!routeRenderer) {
+      return;
+    }
     routeRenderer.geometryWrapper.crs = CoordinateReferenceSystemUtils.wgs84Crs();
     routeRenderer.geometryWrapper.qgsGeometry = GeometryUtils.createGeometryFromWkt(routeWkt);
   }
@@ -638,7 +641,9 @@ Item {
     panel.visible = false;
     loading = false;
     cursorIndex = -1;
-    routeRenderer.geometryWrapper.qgsGeometry = GeometryUtils.createGeometryFromWkt("");
+    if (routeRenderer) {
+      routeRenderer.geometryWrapper.qgsGeometry = GeometryUtils.createGeometryFromWkt("");
+    }
   }
 
   // ---------------------------------------------------------------- GPS
@@ -709,14 +714,28 @@ Item {
   }
 
   // ------------------------------------------------- items on the map
-  GeometryRenderer {
-    id: routeRenderer
-    parent: plugin.mapCanvas
-    anchors.fill: parent
-    mapSettings: plugin.mapCanvas.mapSettings
-    color: "#e8590c"
-    lineWidth: 6
-    visible: panel.visible
+  // The route highlight is created at runtime: QField 4 calls the component
+  // QfGeometryRenderer, older versions GeometryRenderer, and naming one that
+  // doesn't exist in a QML type would stop the whole plugin from loading.
+  property var routeRenderer: null
+
+  function createRouteRenderer() {
+    const attempts = ["import org.qfield\nQfGeometryRenderer {}", "import org.qfield\nGeometryRenderer {}"];
+    for (let i = 0; i < attempts.length; i++) {
+      try {
+        const r = Qt.createQmlObject(attempts[i], mapCanvas, "routeElevationProfileRenderer");
+        r.anchors.fill = mapCanvas;
+        r.mapSettings = mapCanvas.mapSettings;
+        r.color = "#e8590c";
+        r.lineWidth = 6;
+        r.visible = Qt.binding(function () {
+          return panel.visible;
+        });
+        return r;
+      } catch (e) {}
+    }
+    console.log("Route Elevation Profile: no geometry renderer available; the route won't be highlighted");
+    return null;
   }
 
   MapToScreen {
@@ -1312,6 +1331,7 @@ Item {
   Component.onCompleted: {
     loadSettings();
     iface.addItemToPluginsToolbar(profileButton);
+    routeRenderer = createRouteRenderer();
   }
 
   Component.onDestruction: {
