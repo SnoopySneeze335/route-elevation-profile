@@ -57,6 +57,7 @@ Item {
   property var cursorMapPoint: GeometryUtils.point(0, 0)
 
   property int gpsIndex: -1
+  property bool reversed: false              // profile runs from the line's end to its start
   property real gpsOffRoute: -1
   property var gpsAhead: null                // {dist, gain, loss}
 
@@ -485,6 +486,7 @@ Item {
     totalDist = cum;
     elevs = [];
     stats = null;
+    reversed = false;
     cursorIndex = -1;
     gpsIndex = -1;
     gpsOffRoute = -1;
@@ -571,6 +573,42 @@ Item {
     }
     updateGps();
     chart.requestPaint();
+  }
+
+  // Flip the profile so it starts from the other end (e.g. the way back on
+  // an out-and-back). Distances are re-measured from the new start.
+  function reverseRoute() {
+    if (loading || lons.length < 2) {
+      return;
+    }
+    const total = totalDist;
+    const d = dists;
+    const nd = new Array(d.length);
+    for (let i = 0; i < d.length; i++) {
+      nd[i] = total - d[d.length - 1 - i];
+    }
+    const oldCursor = cursorIndex;
+    const vs = viewStart, ve = viewEnd;
+    lons = lons.slice().reverse();
+    lats = lats.slice().reverse();
+    dists = nd;
+    elevs = elevs.slice().reverse();
+    viewStart = total - ve;
+    viewEnd = total - vs;
+    reversed = !reversed;
+    if (oldCursor >= 0) {
+      setCursor(lons.length - 1 - oldCursor);
+    }
+    recomputeStats();
+    toast(reversed ? qsTr("Profile reversed: starting from the other end") : qsTr("Profile back in the original direction"));
+  }
+
+  // Climb and descent from the start of the profile up to sample i
+  function climbTo(i) {
+    if (i < 0 || i >= elevs.length) {
+      return null;
+    }
+    return gainLoss(elevs.slice(0, i + 1), gainThreshold);
   }
 
   function recomputeStats() {
@@ -805,6 +843,16 @@ Item {
         spacing: 4
 
         Button {
+          text: "⇄"
+          flat: true
+          width: 40
+          height: 36
+          font.pixelSize: 20
+          enabled: !plugin.loading && plugin.stats !== null
+          highlighted: plugin.reversed
+          onClicked: plugin.reverseRoute()
+        }
+        Button {
           text: plugin.metric ? "m" : "ft"
           flat: true
           width: 44
@@ -891,10 +939,34 @@ Item {
       }
     }
 
+    // climb from the start to the scrub position
+    Text {
+      id: cursorLine
+      anchors.top: statsRow.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.leftMargin: 12
+      anchors.rightMargin: 12
+      anchors.topMargin: 4
+      font: Theme.tinyFont
+      elide: Text.ElideRight
+      color: plugin.cursorIndex >= 0 ? "#e8590c" : Theme.secondaryTextColor
+      text: {
+        if (!plugin.stats) {
+          return " ";
+        }
+        const c = plugin.climbTo(plugin.cursorIndex);
+        if (!c) {
+          return qsTr("Drag along the chart to see the climb from the start");
+        }
+        return qsTr("Start → %1:  ↑ %2  ·  ↓ %3").arg(plugin.fmtDist(plugin.dists[plugin.cursorIndex])).arg(plugin.fmtElev(c.gain)).arg(plugin.fmtElev(c.loss));
+      }
+    }
+
     // "from you" line when GPS is on
     Item {
       id: gpsLine
-      anchors.top: statsRow.bottom
+      anchors.top: cursorLine.bottom
       anchors.left: parent.left
       anchors.right: parent.right
       anchors.leftMargin: 12

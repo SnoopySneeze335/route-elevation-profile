@@ -2,5 +2,5 @@
 name=Route Elevation Profile
 description=Tap any line on the map for an interactive elevation profile from your project's DEM. Drag along the chart to see distance, elevation and grade with a marker on the map, pinch to zoom, and see what's left from your GPS position. Works offline.
 author=SnoopySneeze335
-version=0.1.1
+version=0.2.0
 icon=icon.svg

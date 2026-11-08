@@ -7,6 +7,8 @@ An interactive elevation profile for any line in your [QField](https://qfield.or
 - **Tap a route** on the map (or open a line in the feature form) and the profile opens.
 - **Drag along the chart** to see distance, elevation and grade at that point, with a marker that follows on the map.
 - **Pinch** the chart to zoom into a section; double-tap to reset.
+- **Climb so far:** while you drag, the line under the stats shows the climb and descent from the start to that point.
+- **Reverse (⇄):** flips the profile to start from the other end, for the way back on an out-and-back.
 - **Your position:** with GPS on and you on the route, a dot shows where you are, plus the distance and climb left to the end.
 - **Stats:** distance, total climb and descent, high and low point.
 - **Works offline:** elevations come from a DEM raster in your project.
@@ -43,7 +45,7 @@ Optional Processing scripts in [`qgis-scripts/`](qgis-scripts/). Add them via Pr
 
 1. Tap the mountain button, then tap a line on the map. Contour layers are ignored.
 2. Drag across the chart to read off points; the map marker follows.
-3. In the panel: **ft/m** switches units, the expand button zooms the map to the route, the sliders button opens settings, ✕ closes it.
+3. In the panel: **⇄** reverses the direction, **ft/m** switches units, the expand button zooms the map to the route, the sliders button opens settings, ✕ closes it.
 
 Long-press the mountain button to open settings at any time.
 
