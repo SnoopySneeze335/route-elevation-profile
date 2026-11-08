@@ -1,0 +1,59 @@
+# Route Elevation Profile for QField
+
+An interactive elevation profile for any line in your [QField](https://qfield.org) project, so you don't have to trace a long route by hand with the measuring tool.
+
+- **Tap a route** on the map (or open a line in the feature form) and the profile opens.
+- **Drag along the chart** to see distance, elevation and grade at that point, with a marker that follows on the map.
+- **Pinch** the chart to zoom into a section; double-tap to reset.
+- **Your position:** with GPS on and you on the route, a dot shows where you are, plus the distance and climb left to the end.
+- **Stats:** distance, total climb and descent, high and low point.
+- **Works offline:** elevations come from a DEM raster in your project.
+- Imperial or metric units, adjustable climb threshold, and a choice of elevation layer in its settings.
+
+> **Status: early release (v0.1).** It's been tested against QField's plugin API outside the app, not yet on many devices. Please [open an issue](../../issues) if something doesn't work, and include a screenshot of QField's message log.
+
+## Install
+
+**In QField:** Settings → Plugins → **Install plugin from URL**, and paste:
+
+```
+https://github.com/YOUR-GITHUB-USERNAME/route-elevation-profile/releases/latest/download/route-elevation-profile.zip
+```
+
+Allow it when QField asks for permission. A mountain button appears on the map.
+
+**As a project plugin** (travels with one project instead): copy [`plugin/main.qml`](plugin/main.qml) next to your project file and rename it to match, e.g. `hike.qgz` → `hike.qml`. QFieldSync packages it with the project.
+
+## What your project needs
+
+A **DEM raster** (elevation model) covering your routes. The plugin picks a raster whose name contains words like *DEM*, *elevation* or *terrain*, checks that it has data along the route, and lets you choose a different one in its settings.
+
+If you don't have one, the QGIS script below makes one.
+
+## QGIS helper scripts
+
+Optional Processing scripts in [`qgis-scripts/`](qgis-scripts/). Add them via Processing Toolbox → Python icon → *Add Script to Toolbox…*
+
+- **`offline_area_package.py`** draws a box around your points and routes, pads it, then saves the basemaps you pick as MBTiles. It also makes a DEM and labelled contour lines, ready to package for QField.
+- **`route_stats.py`** adds distance, climb/descent and high/low point fields to every route, plus a profile image for each.
+
+## Using it
+
+1. Tap the mountain button, then tap a line on the map. Contour layers are ignored.
+2. Drag across the chart to read off points; the map marker follows.
+3. In the panel: **ft/m** switches units, the expand button zooms the map to the route, the sliders button opens settings, ✕ closes it.
+
+Long-press the mountain button to open settings at any time.
+
+## Releasing a new version (maintainers)
+
+Push a tag and GitHub Actions builds the zip and creates the release:
+
+```
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+## License
+
+MIT; see [LICENSE](LICENSE).
