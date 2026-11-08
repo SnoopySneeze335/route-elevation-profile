@@ -51,12 +51,7 @@ Long-press the mountain button to open settings at any time.
 
 ## Releasing a new version (maintainers)
 
-Push a tag and GitHub Actions builds the zip and creates the release:
-
-```
-git tag v0.2.0
-git push origin v0.2.0
-```
+Bump `version=` in [`plugin/metadata.txt`](plugin/metadata.txt) and push to `main`. GitHub Actions builds the zip and creates the `v<version>` release and tag automatically. Pushes that don't change the version don't make a release.
 
 ## License
 

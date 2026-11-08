@@ -1,13 +1,22 @@
 name: Release
 
-# Push a tag like v0.2.0 and this builds route-elevation-profile.zip and
-# attaches it to a GitHub release. The "latest" download link in the README
-# then always points at the newest version.
+# Publishes route-elevation-profile.zip as a GitHub release.
+#
+# - Bump `version=` in plugin/metadata.txt and push to main: a release
+#   v<version> (and its tag) is created automatically.
+# - Pushing a tag like v0.3.0 also works; the tag's version is stamped into
+#   metadata.txt inside the zip.
+# Pushes that don't change the version are skipped, because that release
+# already exists. The README's "latest" download link always points at the
+# newest release.
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,20 +24,42 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Stamp the version into metadata.txt
-        run: sed -i "s/^version=.*/version=${GITHUB_REF_NAME#v}/" plugin/metadata.txt
+      - name: Work out the version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            sed -i "s/^version=.*/version=${version}/" plugin/metadata.txt
+          else
+            version="$(grep -m1 '^version=' plugin/metadata.txt | cut -d= -f2 | tr -d '\r[:space:]')"
+          fi
+          if [[ -z "$version" ]]; then
+            echo "No version= line in plugin/metadata.txt" >&2
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if gh release view "v${version}" > /dev/null 2>&1; then
+            echo "Release v${version} already exists; nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build the plugin zip
+        if: steps.version.outputs.exists == 'false'
         run: |
           cd plugin
           zip -r ../route-elevation-profile.zip main.qml metadata.txt icon.svg
 
       - name: Publish the release
-        env:
-          GH_TOKEN: ${{ github.token }}
+        if: steps.version.outputs.exists == 'false'
         run: |
-          gh release create "$GITHUB_REF_NAME" route-elevation-profile.zip \
-            --title "$GITHUB_REF_NAME" --generate-notes
+          gh release create "v${{ steps.version.outputs.version }}" route-elevation-profile.zip \
+            --target "$GITHUB_SHA" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --generate-notes
